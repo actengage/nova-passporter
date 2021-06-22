@@ -2,9 +2,10 @@
 
 namespace Actengage\Passporter\Resources;
 
-use Actengage\Passporter\Actions\RevokeClient;
+use Actengage\Passporter\Actions\Authorize;
+use Actengage\Passporter\Actions\CreatePersonalAccessToken;
+use Actengage\Passporter\Actions\Revoke;
 use Actengage\Passporter\Filters\RevokedFilter;
-use Actengage\Passporter\CheckRequest;
 use Actengage\Passporter\Client;
 use Actengage\Wizard\HasMultipleSteps;
 use Actengage\Wizard\Step;
@@ -13,8 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\Boolean;
-use Laravel\Nova\Fields\DateTime;
-use Laravel\Nova\Fields\Hidden;
+use Laravel\Nova\Fields\HasMany;
 use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Select;
 use Laravel\Nova\Fields\Text;
@@ -65,7 +65,9 @@ class PassportClient extends Resource
     public function actions(Request $request)
     {
         return [
-            new RevokeClient()
+            new Authorize(),
+            new Revoke(),
+            new CreatePersonalAccessToken(),
         ];
     }
 
@@ -155,9 +157,13 @@ class PassportClient extends Resource
 
             Boolean::make('Revoked')->onlyOnDetail(),
 
-            DateTime::make('Created At')->onlyOnDetail(),
+            Text::make('Created At')->exceptOnForms(),
             
-            DateTime::make('Updated At')->onlyOnDetail(),
+            Text::make('Updated At')->onlyOnDetail(),
+
+            HasMany::make('Access Tokens', 'tokens', PassportToken::class),
+
+            HasMany::make('Auth Codes', 'authCodes', PassportAuthCode::class),
         ];
     }
 
@@ -189,7 +195,7 @@ class PassportClient extends Resource
                     ? $request->findResourceOrFail()
                     : $request->newResource();
                 
-                $resource->resource->type = $request->type;
+                $resource->resource->type = $request->input('type', $resource->type);
                 
                 return $resource;
             })

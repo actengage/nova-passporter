@@ -2,16 +2,17 @@
 
 namespace Actengage\Passporter\Actions;
 
+use Actengage\Passporter\Exceptions\InvalidAuthorizationModelException;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use Laravel\Nova\Actions\Action;
-use Laravel\Nova\Actions\DestructiveAction;
 use Laravel\Nova\Fields\ActionFields;
+use Laravel\Nova\Fields\Text;
+use Laravel\Passport\PersonalAccessTokenFactory;
 
-class RevokeClient extends DestructiveAction
+class CreatePersonalAccessToken extends Action
 {
     use InteractsWithQueue, Queueable;
 
@@ -20,21 +21,26 @@ class RevokeClient extends DestructiveAction
      *
      * @var string
      */
-    public $name = 'Revoke Client';
+    public $name = 'Create Access Token';
 
     /**
      * The text to be used for the action's confirmation text.
      *
      * @var string
      */
-    public $confirmText = 'Are you sure you want to revoke this?';
+    public $confirmText = 'Do you want to create an access token?';
 
     /**
      * The text to be used for the action's confirmation button.
      *
      * @var string
      */
-    public $confirmButtonText = 'Revoke';
+    public $confirmButtonText = 'Authorize';
+
+    public function __construct()
+    {
+        $this->standalone();
+    }
 
     /**
      * Perform the action on the given models.
@@ -45,11 +51,11 @@ class RevokeClient extends DestructiveAction
      */
     public function handle(ActionFields $fields, Collection $models)
     {
-        foreach($models as $model) {
-            $model->revoke();
-        }
+        $response = app(PersonalAccessTokenFactory::class)->make(auth()->user()->id, $fields->name);
 
-        return Action::message(($count = $models->count()) . Str::plural('clients', $count) . ' revoked!');
+        return Action::redirect(
+            config('nova.path', '/nova') . '/resources/passport-tokens/' . $response->token->id
+        );
     }
 
     /**
@@ -59,6 +65,10 @@ class RevokeClient extends DestructiveAction
      */
     public function fields()
     {
-        return [];
+        return [
+            Text::make('Name')
+                ->required()
+                ->rules('required')
+        ];
     }
 }

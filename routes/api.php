@@ -16,10 +16,19 @@ use Laravel\Passport\Passport;
 |
 */
 
-// Route::get('/endpoint', function (Request $request) {
-//     //
-// });
+Route::get('redirect', function(Request $request) {
+    $request->session()->put('state', $state = Str::random(40));
 
+    $query = http_build_query([
+        'client_id' => 'client-id',
+        'redirect_uri' => 'http://localhost',
+        'response_type' => 'code',
+        'scope' => '',
+        'state' => $state,
+    ]);
+
+    return redirect('http://passport-app.com/oauth/authorize?'.$query);
+});
 
 Route::get('installation', function() {
     return response()->json(app('passporter.installer'));

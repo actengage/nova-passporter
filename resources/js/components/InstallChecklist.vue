@@ -149,6 +149,7 @@
                             {{ __('Publish Migrations') }}
                         </h3>
                         <p v-if="!installation.has_published_migrations" class="mb-2">{{ __('This will publish the Passport database migrations.') }}</p>
+                        <p v-else class="mb-2">{{ __('The Passport database migrations have been published.') }}</p>
                         <progress-button
                             v-if="!installation.has_published_migrations"
                             class="btn btn-default mt-3"
@@ -192,7 +193,8 @@
                         {{ __('Uninstall') }}
                     </h1>
                     <p class="mb-2">{{ __('Completely remove all Passport data, rollback and remove the migrations and remove the config file.') }}</p>
-                    <p class="mb-2"><em>{{ __('Note, this will not run "composer remove laravel/passport"') }}</em></p>
+                    <p class="mb-2"><em>{{ __('Note, you will still need to run the following command to completel uninstall Passport:') }}</em></p>
+                    <div><code class="bg-80 text-white">composer remove laravel/passport</code></div>
                     <progress-button
                         class="btn-danger mt-3"
                         :processing="uninstallingPassport"

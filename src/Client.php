@@ -7,6 +7,8 @@ use Laravel\Passport\Passport;
 
 class Client extends PassportClient
 {    
+    use Revokeable;
+    
     protected $rawType;
     
     /**
@@ -17,14 +19,6 @@ class Client extends PassportClient
     protected $attributes = [
         'revoked' => 0,
     ];
-
-    public function revoke()
-    {
-        $this->revoked = true;
-        $this->save();
-
-        return $this;
-    }
 
     public function setTypeAttribute($value)
     {
@@ -68,9 +62,9 @@ class Client extends PassportClient
         return 'default';
     }
 
-    public function is($type)
+    public function is($values)
     {
-        return collect($type)->contains($this->type);
+        return collect($values)->contains($this->type);
     }
 
     public function attributesToArray()
@@ -84,16 +78,31 @@ class Client extends PassportClient
         return $return;
     }
 
-    public function accessTokens()
+    /**
+     * The authorization tokens.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function tokens()
     {
         return $this->hasMany(Passport::tokenModel());
     }
 
+    /**
+     * The authorization codes.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function authCodes()
     {
         return $this->hasMany(Passport::authCodeModel());
     }
 
+    /**
+     * The personal access client.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
     public function personalAccessClient()
     {
         return $this->hasOne(Passport::personalAccessClientModel());

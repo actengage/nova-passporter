@@ -17,7 +17,7 @@ class RevokedFilter extends Filter
      */
     public function apply(Request $request, $query, $value)
     {
-        return $query->where('revoked', $value);
+        return $query->where($query->getModel()->getTable().'.revoked', $value);
     }
 
     /**

@@ -2,12 +2,18 @@
 
 namespace Actengage\Passporter;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Nova\Events\ServingNova;
 use Laravel\Nova\Nova;
 use Actengage\Passporter\Http\Middleware\Authorize;
+use Actengage\Passporter\Policies\PassportClientPolicy;
+use Actengage\Passporter\Policies\PassportTokenPolicy;
+use Actengage\Passporter\Resources\PassportAuthCode;
 use Actengage\Passporter\Resources\PassportClient;
+use Actengage\Passporter\Resources\PassportRefreshToken;
+use Actengage\Passporter\Resources\PassportToken;
 use Illuminate\Http\Request;
 use Laravel\Nova\Actions\ActionEvent;
 use Laravel\Passport\Console\ClientCommand;
@@ -17,7 +23,10 @@ use Laravel\Passport\Passport;
 class ToolServiceProvider extends ServiceProvider
 {
     protected $resources = [
-        PassportClient::class
+        PassportAuthCode::class,
+        PassportClient::class,
+        PassportToken::class,
+        PassportRefreshToken::class,
     ];
 
     /**
@@ -38,6 +47,7 @@ class ToolServiceProvider extends ServiceProvider
         }
 
         Nova::serving(function (ServingNova $event) {
+            
         });
     }
 
