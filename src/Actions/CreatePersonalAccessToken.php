@@ -53,9 +53,14 @@ class CreatePersonalAccessToken extends Action
     {
         $response = app(PersonalAccessTokenFactory::class)->make(auth()->user()->id, $fields->name);
 
-        return Action::redirect(
-            config('nova.path', '/nova') . '/resources/passport-tokens/' . $response->token->id
-        );
+        return [
+            'push' => [
+                'path' => '/resources/passport-tokens/' . $response->token->id
+            ],
+            'resource' => [
+                'secret' => $response->accessToken
+            ]
+        ];
     }
 
     /**

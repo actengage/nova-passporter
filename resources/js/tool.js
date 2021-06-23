@@ -3,9 +3,9 @@ import Tool from './components/Tool';
 
 function shouldShowSecretToken(response) {
   const { config, data } = response;
-  
+
   return !!(
-    config.url === '\/nova-api\/passport-clients'
+    config.url.match(/nova\-api\/passport\-.+/)
       && data
       && data.resource
       && data.resource.secret
@@ -47,6 +47,8 @@ Nova.booting((Vue, router, store) => {
   Nova.request().interceptors.response.use(response => {
     // This feature will show the plain secret token if it exists.
     if(shouldShowSecretToken(response)) {
+      console.log(123)
+      
       createModal(Vue, response.data.resource);
     }
 
