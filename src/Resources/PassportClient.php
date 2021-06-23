@@ -142,7 +142,7 @@ class PassportClient extends Resource
                     ->canSee($this->validator('password')),
 
                 Text::make('Redirect')
-                    ->rules(['required_if:type,password'])
+                    ->rules(['required_if:type,default,public'])
                     ->required($this->validator(['default', 'public']))
                     ->canSee($this->validator(['default', 'public'])),
             ]),
