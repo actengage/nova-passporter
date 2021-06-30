@@ -3,14 +3,20 @@
 namespace Actengage\Passporter\Actions;
 
 use Actengage\Passporter\Exceptions\InvalidAuthorizationModelException;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Collection;
 use Laravel\Nova\Actions\Action;
 use Laravel\Nova\Fields\ActionFields;
+use Laravel\Nova\Fields\Boolean;
+use Laravel\Nova\Fields\DateTime;
 use Laravel\Nova\Fields\Text;
+use Laravel\Passport\Bridge\PersonalAccessGrant;
+use Laravel\Passport\Passport;
 use Laravel\Passport\PersonalAccessTokenFactory;
+use League\OAuth2\Server\AuthorizationServer;
 
 class CreatePersonalAccessToken extends Action
 {
@@ -51,6 +57,19 @@ class CreatePersonalAccessToken extends Action
      */
     public function handle(ActionFields $fields, Collection $models)
     {
+        Passport::personalAccessTokensExpireIn($fields->expires ? (
+            $fields->expires_at ? Carbon::parse($fields->expires_at) : null
+         ) : now()->addCentury(1));
+
+        tap(app(AuthorizationServer::class), function ($server) {
+            $server->enableGrantType(
+                new PersonalAccessGrant, Passport::personalAccessTokensExpireIn()
+            );
+        });
+
+        Passport::$tokensExpireAt = null;
+        Passport::$personalAccessTokensExpireAt = null;
+
         $response = app(PersonalAccessTokenFactory::class)->make(auth()->user()->id, $fields->name);
 
         return [
@@ -73,7 +92,14 @@ class CreatePersonalAccessToken extends Action
         return [
             Text::make('Name')
                 ->required()
-                ->rules('required')
+                ->rules('required'),
+        
+            Boolean::make('Expires')
+                ->default(true),
+            
+            DateTime::make('Expires At')
+                ->rules(['nullable', 'date'])
+                ->default(now()->add(Passport::personalAccessTokensExpireIn())),
         ];
     }
 }
