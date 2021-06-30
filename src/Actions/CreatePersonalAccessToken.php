@@ -67,9 +67,6 @@ class CreatePersonalAccessToken extends Action
             );
         });
 
-        Passport::$tokensExpireAt = null;
-        Passport::$personalAccessTokensExpireAt = null;
-
         $response = app(PersonalAccessTokenFactory::class)->make(auth()->user()->id, $fields->name);
 
         return [
