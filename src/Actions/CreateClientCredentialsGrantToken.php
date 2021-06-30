@@ -2,23 +2,27 @@
 
 namespace Actengage\Passporter\Actions;
 
-use Actengage\Passporter\Exceptions\InvalidAuthorizationModelException;
+use Actengage\Passporter\Client;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
 use Laravel\Nova\Actions\Action;
 use Laravel\Nova\Fields\ActionFields;
 use Laravel\Nova\Fields\Boolean;
 use Laravel\Nova\Fields\DateTime;
+use Laravel\Nova\Fields\Select;
 use Laravel\Nova\Fields\Text;
+use Laravel\Passport\ApiTokenCookieFactory;
 use Laravel\Passport\Bridge\PersonalAccessGrant;
+use Laravel\Passport\Http\Controllers\AccessTokenController;
 use Laravel\Passport\Passport;
 use Laravel\Passport\PersonalAccessTokenFactory;
+use Laravel\Passport\TokenRepository;
 use League\OAuth2\Server\AuthorizationServer;
 
-class CreatePersonalAccessToken extends Action
+class CreateClientCredentialsGrantToken extends Action
 {
     use InteractsWithQueue, Queueable;
 
@@ -27,7 +31,7 @@ class CreatePersonalAccessToken extends Action
      *
      * @var string
      */
-    public $name = 'Create Personal Access Token';
+    public $name = 'Create Client Credentials Grant Token';
 
     /**
      * The text to be used for the action's confirmation button.
@@ -55,17 +59,24 @@ class CreatePersonalAccessToken extends Action
      */
     public function handle(ActionFields $fields, Collection $models)
     {
-        Passport::personalAccessTokensExpireIn($fields->expires ? (
-            $fields->expires_at ? Carbon::parse($fields->expires_at) : null
-         ) : now()->addCentury(1));
+        $client = Client::findOrFail($fields->client);
 
-        tap(app(AuthorizationServer::class), function ($server) {
-            $server->enableGrantType(
-                new PersonalAccessGrant, Passport::personalAccessTokensExpireIn()
-            );
-        });
+        $controller = new AccessTokenController(
+            app()->get(AuthorizationServer::class),
+            app()->get(TokenRepository::class),
+            app()->get(JwtParser::class)
+        );
 
-        $response = app(PersonalAccessTokenFactory::class)->make(auth()->user()->id, $fields->name);
+        dd($controller);
+
+        $response = Http::asForm()->post(url('oauth/token'), [
+            'grant_type' => 'client_credentials',
+            'client_id' => $client->id,
+            'client_secret' => $client->secret,
+            'scope' => 'your-scope',
+        ]);
+
+        dd($response);
 
         return [
             'push' => [
@@ -89,6 +100,22 @@ class CreatePersonalAccessToken extends Action
                 ->required()
                 ->rules('required')
                 ->required(),
+
+            Select::make('Client')
+                ->rules('required')
+                ->required()
+                ->options(
+                    Client::query()
+                        ->whereNull('user_id')
+                        ->whereNull('provider')
+                        ->wherePersonalAccessClient(0)
+                        ->wherePasswordClient(0)
+                        ->whereRevoked(0)
+                        ->get()
+                        ->mapWithKeys(function($model) {
+                            return [$model->id => $model->name];
+                        })
+                ),
         
             Boolean::make('Expires')
                 ->default(true),
@@ -96,6 +123,9 @@ class CreatePersonalAccessToken extends Action
             DateTime::make('Expires At')
                 ->rules(['nullable', 'date'])
                 ->default(now()->add(Passport::personalAccessTokensExpireIn())),
+
+            Text::make('Scope')
+                ->help('Enter comma seperated scope values. Examples: \'create-users\', \'delete-users\'')
         ];
     }
 }

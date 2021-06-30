@@ -56,8 +56,8 @@ class PassportAuthCode extends Resource
     public function actions(Request $request)
     {
         return [
-            new CreatePersonalAccessToken(),
-            new Revoke()
+            app()->make(CreatePersonalAccessToken::class),
+            app()->make(Revoke::class),
         ];
     }
 
@@ -95,7 +95,7 @@ class PassportAuthCode extends Resource
     public function filters(Request $request)
     {
         return [
-            new RevokedFilter()
+            app()->make(RevokedFilter::class)
         ];
     }
 

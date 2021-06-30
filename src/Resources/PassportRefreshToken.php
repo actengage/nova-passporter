@@ -70,7 +70,7 @@ class PassportRefreshToken extends Resource
     public function actions(Request $request)
     {
         return [
-            new Revoke()
+            app()->make(Revoke::class),
         ];
     }
 
@@ -106,7 +106,7 @@ class PassportRefreshToken extends Resource
     public function filters(Request $request)
     {
         return [
-            new RevokedFilter()
+            app()->make(RevokedFilter::class)
         ];
     }
 

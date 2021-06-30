@@ -3,6 +3,7 @@
 namespace Actengage\Passporter\Resources;
 
 use Actengage\Passporter\Actions\Authorize;
+use Actengage\Passporter\Actions\CreateClientCredentialsGrantToken;
 use Actengage\Passporter\Actions\CreatePersonalAccessToken;
 use Actengage\Passporter\Actions\Revoke;
 use Actengage\Passporter\Filters\RevokedFilter;
@@ -65,9 +66,10 @@ class PassportClient extends Resource
     public function actions(Request $request)
     {
         return [
-            new Authorize(),
-            new Revoke(),
-            new CreatePersonalAccessToken(),
+            app()->make(Authorize::class),
+            app()->make(Revoke::class),
+            app()->make(CreatePersonalAccessToken::class),
+            app()->make(CreateClientCredentialsGrantToken::class),
         ];
     }
 
@@ -90,10 +92,10 @@ class PassportClient extends Resource
                     ->rules(['required'])
                     ->options([
                         'default' => 'Client access token (default)',
-                        'client' => 'Client credentials grant (client)',
-                        'personal' => 'Personal access token (personal)',
-                        'password' => 'Password grant client (password)',
-                        'public' =>  'Authorization code grant (public)'
+                        'client' => 'Client credentials grant (--client)',
+                        'personal' => 'Personal access token (--personal)',
+                        'password' => 'Password grant client (--password)',
+                        'public' =>  'Authorization code grant (--public)'
                     ])
                     ->fillUsing(function($request, $model, $attribute, $requestAttribute) {
                         // Set the secret for the applicable cases
@@ -176,7 +178,7 @@ class PassportClient extends Resource
     public function filters(Request $request)
     {
         return [
-            new RevokedFilter()
+            app()->make(RevokedFilter::class)
         ];
     }
 

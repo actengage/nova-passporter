@@ -1,9 +1,6 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
-use Laravel\Passport\Passport;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,76 +13,27 @@ use Laravel\Passport\Passport;
 |
 */
 
-Route::get('redirect', function(Request $request) {
-    $request->session()->put('state', $state = Str::random(40));
+Route::get('redirect', 'RedirectController@handle');
 
-    $query = http_build_query([
-        'client_id' => 'client-id',
-        'redirect_uri' => 'http://localhost',
-        'response_type' => 'code',
-        'scope' => '',
-        'state' => $state,
-    ]);
+Route::get('installation', 'InstallController@index');
+Route::delete('installation', 'InstallController@uninstall');
 
-    return redirect('http://passport-app.com/oauth/authorize?'.$query);
-});
+Route::post('installation/keys', 'InstallKeysController@create');
+Route::delete('installation/keys', 'InstallKeysController@delete');
 
-Route::get('installation', function() {
-    return response()->json(app('passporter.installer'));
-});
+Route::post('installation/migrations', 'InstallMigrationsController@publish');
+Route::delete('installation/migrations', 'InstallMigrationsController@unpublish');
 
-Route::post('installation/keys', function() {
-    return response()->json(app('passporter.installer')->createKeys());
-});
+Route::post('installation/config', 'InstallConfigController@publish');
+Route::delete('installation/config', 'InstallConfigController@unpublish');
 
-Route::delete('installation/keys', function() {
-    return response()->json(app('passporter.installer')->deleteKeys());
-});
+Route::post('installation/personal-access-client', 'InstallPersonalAccessClientController@create');
+Route::delete('installation/personal-access-client', 'InstallPersonalAccessClientController@delete');
 
-Route::post('installation/migrations', function() {
-    return response()->json(app('passporter.installer')->publishMigrations());
-});
+Route::post('installation/password-client', 'InstallPasswordClientController@create');
+Route::delete('installation/password-client', 'InstallPasswordClientController@delete');
 
-Route::delete('installation/migrations', function() {
-    return response()->json(app('passporter.installer')->unpublishMigrations());
-});
+Route::post('installation/migrate', 'InstallRunMigrationsController@run');
+Route::delete('installation/migrate', 'InstallRunMigrationsController@rollback');
 
-Route::post('installation/config', function() {
-    return response()->json(app('passporter.installer')->publishConfig());
-});
-
-Route::delete('installation/config', function() {
-    return response()->json(app('passporter.installer')->unpublishConfig());
-});
-
-Route::post('installation/personal-access-client', function() {
-    return response()->json(app('passporter.installer')->createPersonalAccessClient());
-});
-
-Route::delete('installation/personal-access-client', function() {
-    return response()->json(app('passporter.installer')->deletePersonalAccessClient());
-});
-
-Route::post('installation/password-client', function() {
-    return response()->json(app('passporter.installer')->createPasswordClient());
-});
-
-Route::delete('installation/password-client', function() {
-    return response()->json(app('passporter.installer')->deletePasswordClient());
-});
-
-Route::post('installation/client-uuids', function() {
-    return response()->json(app('passporter.installer')->migrateClientUuids());
-});
-
-Route::post('installation/migrate', function() {
-    return response()->json(app('passporter.installer')->runMigrations());
-});
-
-Route::delete('installation/migrate', function() {
-    return response()->json(app('passporter.installer')->rollbackMigrations());
-});
-
-Route::delete('installation', function() {
-    return response()->json(app('passporter.installer')->uninstall());
-});
+Route::post('installation/client-uuids', 'InstallMigrateUuidsController@handle');
