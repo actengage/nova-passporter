@@ -16,7 +16,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Nova\Actions\ActionEvent;
-use Laravel\Nova\Events\ServingNova;
 use Laravel\Nova\Nova;
 use Laravel\Passport\Console\ClientCommand;
 use Laravel\Passport\Console\KeysCommand;
@@ -30,7 +29,7 @@ class ToolServiceProvider extends ServiceProvider
         PassportToken::class,
         PassportRefreshToken::class,
     ];
-
+    
     /**
      * Bootstrap any application services.
      *
@@ -41,7 +40,6 @@ class ToolServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'passporter');
 
         $this->app->booted(function () {
-            $this->registerObservers();
             $this->registerRoutes();
         });
         
@@ -50,16 +48,6 @@ class ToolServiceProvider extends ServiceProvider
         }
     }
     
-    /**
-     * Register the tool's model observers.
-     *
-     * @return void
-     */
-    protected function registerObservers()
-    {
-        ActionEvent::observe(ActionEventObserver::class);
-    }
-
     /**
      * Register the tool's routes.
      *

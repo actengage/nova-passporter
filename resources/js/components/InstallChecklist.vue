@@ -167,6 +167,7 @@
                     </div>
                 </div>
                 
+                <!--
                 <div class="flex items-start p-3">
                     <install-checklist-icon :valid="!!(installation.client_uuids && installation.has_ran_client_uuid_migrations)" />
                     <div>
@@ -185,6 +186,7 @@
                         </progress-button>
                     </div>
                 </div>
+                -->
             </card>
 
             <card v-if="installation.has_published_migrations || installation.private_key_exists || installation.public_key_exists" class="p-3 mt-3">

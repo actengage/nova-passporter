@@ -21,6 +21,8 @@ use Laravel\Passport\Passport;
 use Laravel\Passport\PersonalAccessTokenFactory;
 use Laravel\Passport\TokenRepository;
 use League\OAuth2\Server\AuthorizationServer;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class CreateClientCredentialsGrantToken extends Action
 {
@@ -59,31 +61,24 @@ class CreateClientCredentialsGrantToken extends Action
      */
     public function handle(ActionFields $fields, Collection $models)
     {
-        $client = Client::findOrFail($fields->client);
+        $client = Client::find($fields->client);
 
-        $controller = new AccessTokenController(
-            app()->get(AuthorizationServer::class),
-            app()->get(TokenRepository::class),
-            app()->get(JwtParser::class)
-        );
-
-        dd($controller);
-
-        $response = Http::asForm()->post(url('oauth/token'), [
+        $request = app()->make(ServerRequestInterface::class)->withParsedBody([
             'grant_type' => 'client_credentials',
             'client_id' => $client->id,
             'client_secret' => $client->secret,
-            'scope' => 'your-scope',
+            'scope' => $fields->scope
         ]);
-
-        dd($response);
+    
+        $response = app(AuthorizationServer::class)->respondToAccessTokenRequest(
+            $request, app()->make(ResponseInterface::class)
+        );
+    
+        $parsed = json_decode($response->getBody());
 
         return [
-            'push' => [
-                'path' => '/resources/passport-tokens/' . $response->token->id
-            ],
             'resource' => [
-                'secret' => $response->accessToken
+                'secret' => $parsed->access_token
             ]
         ];
     }
@@ -95,12 +90,11 @@ class CreateClientCredentialsGrantToken extends Action
      */
     public function fields()
     {
-        return [
-            Text::make('Name')
-                ->required()
-                ->rules('required')
-                ->required(),
+        $options = Passport::scopes()->mapWithKeys(function($scope) {
+            return [$scope->id => $scope->description];
+        });
 
+        return array_filter([
             Select::make('Client')
                 ->rules('required')
                 ->required()
@@ -124,8 +118,7 @@ class CreateClientCredentialsGrantToken extends Action
                 ->rules(['nullable', 'date'])
                 ->default(now()->add(Passport::personalAccessTokensExpireIn())),
 
-            Text::make('Scope')
-                ->help('Enter comma seperated scope values. Examples: \'create-users\', \'delete-users\'')
-        ];
+            $options->count() ? Select::make('Scope')->options($options) : null
+        ]);
     }
 }

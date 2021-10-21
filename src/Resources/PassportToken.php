@@ -3,6 +3,7 @@
 namespace Actengage\Passporter\Resources;
 
 use Actengage\Passporter\Actions\CreateAccessToken;
+use Actengage\Passporter\Actions\CreateClientCredentialsGrantToken;
 use Actengage\Passporter\Actions\CreatePersonalAccessToken;
 use Actengage\Passporter\Actions\Revoke;
 use Actengage\Passporter\Filters\RevokedFilter;
@@ -58,6 +59,7 @@ class PassportToken extends Resource
         'id',
         'name'
     ];
+    
 
     /**
      * Get the actions used by the resource.
@@ -69,6 +71,7 @@ class PassportToken extends Resource
     {
         return [
             app()->make(CreatePersonalAccessToken::class),
+            app()->make(CreateClientCredentialsGrantToken::class),
             app()->make(Revoke::class),
         ];
     }
